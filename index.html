@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ANOMALY COMMAND CENTER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.29.9.min.js"></script>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { 
+            padding: 15px; background: #111; border: 1px solid #0f0; 
+            color: #0f0; font-weight: bold; cursor: pointer; border-radius: 5px;
+        }
+        button:active { background: #0f0; color: #000; }
+        .status-box { margin-bottom: 20px; border: 1px double #0f0; padding: 10px; font-size: 0.9em; }
+        .label { grid-column: span 2; margin-top: 10px; color: #aaa; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <div class="status-box">
+        SYSTEM: ANOMALY v3.0<br>
+        STATUS: <span id="status">CONNECTING...</span>
+    </div>
+    
+    <div class="grid">
+        <div class="label">-- SEQUENTIAL MODES --</div>
+        <button onclick="send('BESAR_3')">BESAR (3 MATCH)</button>
+        <button onclick="send('KECIL_3')">KECIL (3 MATCH)</button>
+        
+        <div class="label">-- UNIQUE MODES --</div>
+        <button onclick="send('UNIK_9_31_3')">9 & 31 (3 MATCH)</button>
+        <button onclick="send('UNIK_32_3')">32 (3 MATCH)</button>
+        
+        <div class="label">-- HYBRID MODES --</div>
+        <button onclick="send('B2K1')">2 BESAR + 1 KECIL</button>
+        <button onclick="send('K2B1')">2 KECIL + 1 BESAR</button>
+    </div>
+
+    <script>
+        const pubnub = new PubNub({ publishKey: "pub-c-1acc1a35-3758-4207-9563-291fa3d70860", subscribeKey: "sub-c-93d8d3c9-db67-4384-ba75-732532bee299" });
+        pubnub.addListener({ status: (s) => { if(s.category === "PNConnectedCategory") document.getElementById('status').innerText = "ONLINE"; } });
+        pubnub.subscribe({ channels: ["anomaly_dice_stream"] });
+
+        function send(mode) {
+            pubnub.publish({
+                channel: "anomaly_dice_stream",
+                message: { cmd: mode, t: Date.now() }
+            });
+            document.getElementById('status').innerText = "SENT: " + mode;
+            setTimeout(() => { document.getElementById('status').innerText = "ONLINE"; }, 2000);
+        }
+    </script>
+</body>
+</html>
