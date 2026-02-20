@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TITAN REMOTE v13</title>
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.29.9.min.js"></script>
+    <style>
+        body { background: #0a0a0a; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 20px; }
+        .header { border-bottom: 2px solid #00ff00; padding-bottom: 10px; margin-bottom: 20px; text-shadow: 0 0 10px #00ff00; }
+        .status { font-size: 12px; margin-bottom: 20px; color: #008800; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        button { 
+            background: #1a1a1a; border: 1px solid #00ff00; color: #00ff00; 
+            padding: 20px 10px; font-weight: bold; cursor: pointer; border-radius: 5px;
+            transition: 0.3s; font-size: 14px;
+        }
+        button:active { background: #00ff00; color: #000; box-shadow: 0 0 20px #00ff00; }
+        .footer { margin-top: 30px; font-size: 10px; opacity: 0.5; }
+    </style>
+</head>
+<body>
+    <div class="header">TITAN REMOTE CONTROL</div>
+    <div class="status" id="stat">SYSTEM: READY</div>
+
+    <div class="grid">
+        <button onclick="send('BESAR_3')">BESAR<br>(3 MATCH)</button>
+        <button onclick="send('KECIL_3')">KECIL<br>(3 MATCH)</button>
+        <button onclick="send('UNIK_9_31')">9 DAN 31<br>(3 MATCH)</button>
+        <button onclick="send('UNIK_32')">32<br>(3 MATCH)</button>
+        <button onclick="send('2B1K')">2 BESAR<br>+ 1 KECIL</button>
+        <button onclick="send('2K1B')">2 KECIL<br>+ 1 BESAR</button>
+    </div>
+
+    <div class="footer">ANOMALY SYSTEM v13.0 | SECURE CONNECTION</div>
+
+    <script>
+        const pubnub = new PubNub({
+            publishKey: "pub-c-1acc1a35-3758-4207-9563-291fa3d70860", // MASUKKAN KEY ANDA
+            subscribeKey: "sub-c-93d8d3c9-db67-4384-ba75-732532bee299"
+        });
+
+        function send(cmd) {
+            pubnub.publish({ 
+                channel: "anomaly_dice_stream", 
+                message: { cmd: cmd } 
+            }, function(status, response) {
+                if (!status.error) {
+                    document.getElementById('stat').innerText = "SENT: " + cmd;
+                    document.getElementById('stat').style.color = "#fff";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
