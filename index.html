@@ -1,24 +1,357 @@
 <!DOCTYPE html>
-<html>
-<body style="background:#111">
-    <div style="text-align:center;color:white;padding:20px">
-        <h1 style="color:gold">🎲 9 DADU</h1>
-        <div id="tampil" style="font-size:50px;padding:20px;background:#000;margin:20px">ACAK</div>
-        
-        <button onclick="setMode('BESAR')" style="background:red;color:white;padding:20px;font-size:30px;width:100%;margin:5px">BESAR</button>
-        <button onclick="setMode('KECIL')" style="background:cyan;color:black;padding:20px;font-size:30px;width:100%;margin:5px">KECIL</button>
-        <button onclick="setMode('ACAK')" style="background:white;color:black;padding:20px;font-size:30px;width:100%;margin:5px">ACAK</button>
-    </div>
-    
-    <script>
-        function setMode(m) {
-            localStorage.setItem('dice_mode', m);
-            document.getElementById('tampil').innerText = m;
-            if(m === 'BESAR') document.getElementById('tampil').style.color = 'red';
-            else if(m === 'KECIL') document.getElementById('tampil').style.color = 'cyan';
-            else document.getElementById('tampil').style.color = 'white';
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNTAX335 - REMOTE DICE CONTROL via PubNub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0a0a0f, #1a1a2e);
+            font-family: 'Segoe UI', monospace;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        setMode('ACAK');
+        .container {
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            padding: 30px;
+            border: 3px solid gold;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+            max-width: 450px;
+            width: 100%;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: gold;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px gold;
+            letter-spacing: 2px;
+        }
+        .sub {
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+        .mode-display {
+            font-size: 4em;
+            font-weight: bold;
+            text-align: center;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 30px;
+            transition: 0.3s;
+            background: #111;
+            border: 2px solid;
+        }
+        .mode-besar { 
+            color: #ff4444; 
+            border-color: #ff4444;
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.5);
+            background: #220000;
+        }
+        .mode-kecil { 
+            color: #4ecdc4; 
+            border-color: #4ecdc4;
+            box-shadow: 0 0 30px rgba(78, 205, 196, 0.5);
+            background: #002220;
+        }
+        .mode-acak { 
+            color: gold; 
+            border-color: gold;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            background: #222200;
+        }
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .btn {
+            padding: 25px;
+            font-size: 2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 2px solid transparent;
+        }
+        .btn-besar { 
+            background: #ff4444; 
+            color: white;
+            box-shadow: 0 10px 0 #aa2222;
+        }
+        .btn-besar:active { transform: translateY(5px); box-shadow: 0 5px 0 #aa2222; }
+        
+        .btn-kecil { 
+            background: #4ecdc4; 
+            color: black;
+            box-shadow: 0 10px 0 #2a8f88;
+        }
+        .btn-kecil:active { transform: translateY(5px); box-shadow: 0 5px 0 #2a8f88; }
+        
+        .btn-acak { 
+            background: gold; 
+            color: black;
+            box-shadow: 0 10px 0 #b8860b;
+        }
+        .btn-acak:active { transform: translateY(5px); box-shadow: 0 5px 0 #b8860b; }
+        
+        .status-panel {
+            background: #111;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #333;
+        }
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 10px;
+        }
+        .status-label { color: #888; }
+        .status-value { color: gold; font-weight: bold; }
+        .connection-led {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4ecdc4;
+            display: inline-block;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .footer {
+            text-align: center;
+            color: #444;
+            font-size: 0.8em;
+            margin-top: 20px;
+        }
+        .pubnub-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background: #0a0a0f;
+            border-radius: 50px;
+        }
+    </style>
+    
+    <!-- PubNub JavaScript SDK - WAJIB! -->
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.10.2.7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 SYNTAX335 🎲</h1>
+        <div class="sub">REMOTE DICE CONTROL via PubNub</div>
+        
+        <!-- Mode Display -->
+        <div id="modeDisplay" class="mode-display mode-acak">ACAK</div>
+        
+        <!-- Control Buttons -->
+        <div class="btn-container">
+            <button class="btn btn-besar" onclick="sendCommand('BESAR')">🎯 BESAR (32-54)</button>
+            <button class="btn btn-kecil" onclick="sendCommand('KECIL')">🎯 KECIL (9-31)</button>
+            <button class="btn btn-acak" onclick="sendCommand('ACAK')">🎲 ACAK (9-54)</button>
+        </div>
+        
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <div class="pubnub-status">
+                <span class="connection-led" id="connectionLed"></span>
+                <span id="connectionStatus">Connecting to PubNub...</span>
+            </div>
+            
+            <div class="status-row">
+                <span class="status-label">Last Command:</span>
+                <span class="status-value" id="lastCommand">-</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Target Range:</span>
+                <span class="status-value" id="targetRange">9-54</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Channel:</span>
+                <span class="status-value" id="channelName">dice_control_9d</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            ⚡ REAL TIME • PubNub • 100% WORK ⚡
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // KONFIGURASI PUB NUB - GANTI DENGAN PUNYA LU!
+        // ============================================
+        const PUBNUB_CONFIG = {
+            publishKey: "pub-c-1acc1a35-3758-4207-9563-291fa3d70860",      // GANTI DENGAN PUBLISH KEY LU!
+            subscribeKey: "sub-c-93d8d3c9-db67-4384-ba75-732532bee299",     // GANTI DENGAN SUBSCRIBE KEY LU!
+            channel: "anomaly-dice",
+            uuid: "remote_controller_" + Math.random().toString(36).substr(2, 8)
+        };
+        
+        // ============================================
+        // INIT PUB NUB
+        // ============================================
+        let pubnub;
+        let currentMode = 'ACAK';
+        
+        function initPubNub() {
+            try {
+                pubnub = new PubNub({
+                    publishKey: PUBNUB_CONFIG.publishKey,
+                    subscribeKey: PUBNUB_CONFIG.subscribeKey,
+                    uuid: PUBNUB_CONFIG.uuid,
+                    ssl: true
+                });
+                
+                // Update status
+                document.getElementById('connectionStatus').innerText = 'Connected to PubNub!';
+                document.getElementById('connectionLed').style.background = '#4ecdc4';
+                
+                console.log('✅ PubNub Connected:', pubnub.getUUID());
+                
+            } catch (error) {
+                console.error('❌ PubNub Error:', error);
+                document.getElementById('connectionStatus').innerHTML = '❌ PubNub Error!';
+                document.getElementById('connectionLed').style.background = 'red';
+            }
+        }
+        
+        // ============================================
+        // SEND COMMAND VIA PUBNUB
+        // ============================================
+        async function sendCommand(mode) {
+            try {
+                // Validasi PubNub
+                if (!pubnub) {
+                    alert('PubNub belum siap kontol!');
+                    return;
+                }
+                
+                // Update UI
+                currentMode = mode;
+                updateDisplay(mode);
+                
+                // Generate total sesuai mode
+                let total;
+                if (mode === 'BESAR') {
+                    total = Math.floor(Math.random() * 23) + 32; // 32-54
+                } else if (mode === 'KECIL') {
+                    total = Math.floor(Math.random() * 23) + 9;  // 9-31
+                } else {
+                    total = Math.floor(Math.random() * 46) + 9;  // 9-54
+                }
+                
+                // Generate 9 dadu dengan total = total
+                let dice = generateDiceSet(total, 9);
+                
+                // Buat command object
+                const command = {
+                    mode: mode,
+                    total: total,
+                    dice: dice,
+                    timestamp: Date.now(),
+                    sender: 'remote_controller'
+                };
+                
+                // Kirim via PubNub
+                const result = await pubnub.publish({
+                    message: command,
+                    channel: PUBNUB_CONFIG.channel
+                });
+                
+                // Update status
+                document.getElementById('lastCommand').innerHTML = `${mode} (Total: ${total})`;
+                document.getElementById('targetRange').innerHTML = mode === 'BESAR' ? '32-54' : (mode === 'KECIL' ? '9-31' : '9-54');
+                
+                console.log('✅ Command sent:', command);
+                console.log('📡 Timetoken:', result.timetoken);
+                
+            } catch (error) {
+                console.error('❌ Publish error:', error);
+                alert('Gagal kirim command: ' + error.message);
+            }
+        }
+        
+        // ============================================
+        // GENERATE DICE SET DENGAN TOTAL TERTENTU
+        // ============================================
+        function generateDiceSet(targetTotal, numDice) {
+            let dice = Array(numDice).fill(1);
+            let remaining = targetTotal - numDice;
+            
+            // Distribusi sisa secara random
+            for (let i = 0; i < remaining; i++) {
+                let idx = Math.floor(Math.random() * numDice);
+                if (dice[idx] < 6) {
+                    dice[idx]++;
+                } else {
+                    i--; // Cari lagi kalo udah 6
+                }
+            }
+            
+            // Acak urutan
+            for (let i = dice.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [dice[i], dice[j]] = [dice[j], dice[i]];
+            }
+            
+            return dice;
+        }
+        
+        // ============================================
+        // UPDATE UI DISPLAY
+        // ============================================
+        function updateDisplay(mode) {
+            const display = document.getElementById('modeDisplay');
+            display.innerText = mode;
+            
+            // Hapus semua class
+            display.classList.remove('mode-besar', 'mode-kecil', 'mode-acak');
+            
+            // Tambah class sesuai mode
+            if (mode === 'BESAR') {
+                display.classList.add('mode-besar');
+            } else if (mode === 'KECIL') {
+                display.classList.add('mode-kecil');
+            } else {
+                display.classList.add('mode-acak');
+            }
+        }
+        
+        // ============================================
+        // INIT
+        // ============================================
+        window.onload = function() {
+            initPubNub();
+            updateDisplay('ACAK');
+            document.getElementById('lastCommand').innerHTML = '-';
+            document.getElementById('channelName').innerHTML = PUBNUB_CONFIG.channel;
+        };
     </script>
 </body>
 </html>
