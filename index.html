@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>9 DICE CONTROLLER</title>
+    <style>
+        body {
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial;
+        }
+        .box {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid gold;
+            text-align: center;
+            width: 300px;
+        }
+        h1 {
+            color: gold;
+            font-size: 24px;
+            margin: 0 0 20px 0;
+        }
+        .mode {
+            font-size: 48px;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            transition: 0.3s;
+        }
+        .mode.besar { background: #330000; color: red; border: 2px solid red; }
+        .mode.kecil { background: #000033; color: cyan; border: 2px solid cyan; }
+        .btn {
+            width: 100%;
+            padding: 20px;
+            margin: 5px 0;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        .btn-besar { background: red; color: white; }
+        .btn-kecil { background: cyan; color: black; }
+        .status {
+            color: #666;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🎲 SYNTAX335 🎲</h1>
+        
+        <div class="mode kecil" id="modeDisplay">KECIL</div>
+        
+        <button class="btn btn-besar" id="btnBesar">BESAR (32-54)</button>
+        <button class="btn btn-kecil" id="btnKecil">KECIL (9-31)</button>
+        
+        <div class="status" id="status">Current: KECIL</div>
+    </div>
+
+    <script>
+        let currentMode = 'KECIL';
+        const modeDisplay = document.getElementById('modeDisplay');
+        const status = document.getElementById('status');
+        
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Update tampilan
+            modeDisplay.className = 'mode ' + (mode === 'BESAR' ? 'besar' : 'kecil');
+            modeDisplay.innerText = mode;
+            status.innerText = 'Current: ' + mode;
+            
+            // Kirim command ke game via localStorage
+            localStorage.setItem('dice_command', JSON.stringify({
+                mode: mode,
+                time: Date.now()
+            }));
+            
+            // Trigger biar langsung work
+            window.dispatchEvent(new Event('storage'));
+        }
+        
+        document.getElementById('btnBesar').onclick = () => setMode('BESAR');
+        document.getElementById('btnKecil').onclick = () => setMode('KECIL');
+        
+        // Auto set default
+        setMode('KECIL');
+    </script>
+</body>
+</html>
