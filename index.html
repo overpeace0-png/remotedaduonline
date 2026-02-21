@@ -1,41 +1,23 @@
 <!DOCTYPE html>
 <html>
-<body style="background:#000;font-family:arial;padding:10px">
-    <div style="text-align:center;border:3px solid gold;border-radius:20px;padding:20px">
-        <h1 style="color:gold">🎲 DICE CONTROL</h1>
+<body style="background:#111">
+    <div style="text-align:center;color:white;padding:20px">
+        <h1 style="color:gold">🎲 9 DADU</h1>
+        <div id="tampil" style="font-size:50px;padding:20px;background:#000;margin:20px">ACAK</div>
         
-        <div id="modeDisplay" style="font-size:60px;padding:30px;margin:20px;border-radius:20px;background:#111;color:white">ACAK</div>
-        
-        <button onclick="setMode('BESAR')" style="background:red;color:white;padding:25px;font-size:35px;width:100%;margin:5px;border:none;border-radius:15px">BESAR (32-54)</button>
-        
-        <button onclick="setMode('KECIL')" style="background:cyan;color:black;padding:25px;font-size:35px;width:100%;margin:5px;border:none;border-radius:15px">KECIL (9-31)</button>
-        
-        <button onclick="setMode('ACAK')" style="background:white;color:black;padding:25px;font-size:35px;width:100%;margin:5px;border:none;border-radius:15px">🎲 ACAK (9-54)</button>
-        
-        <div style="color:#666;margin-top:20px">Status: <span id="status">ACAK</span></div>
+        <button onclick="setMode('BESAR')" style="background:red;color:white;padding:20px;font-size:30px;width:100%;margin:5px">BESAR</button>
+        <button onclick="setMode('KECIL')" style="background:cyan;color:black;padding:20px;font-size:30px;width:100%;margin:5px">KECIL</button>
+        <button onclick="setMode('ACAK')" style="background:white;color:black;padding:20px;font-size:30px;width:100%;margin:5px">ACAK</button>
     </div>
     
     <script>
         function setMode(m) {
-            localStorage.setItem('dice_mode', JSON.stringify({mode: m}));
-            
-            let display = document.getElementById('modeDisplay');
-            display.innerText = m;
-            
-            if(m === 'BESAR') {
-                display.style.background = '#330000';
-                display.style.color = 'red';
-            } else if(m === 'KECIL') {
-                display.style.background = '#000033';
-                display.style.color = 'cyan';
-            } else {
-                display.style.background = '#111';
-                display.style.color = 'white';
-            }
-            
-            document.getElementById('status').innerText = m;
+            localStorage.setItem('dice_mode', m);
+            document.getElementById('tampil').innerText = m;
+            if(m === 'BESAR') document.getElementById('tampil').style.color = 'red';
+            else if(m === 'KECIL') document.getElementById('tampil').style.color = 'cyan';
+            else document.getElementById('tampil').style.color = 'white';
         }
-        
         setMode('ACAK');
     </script>
 </body>
