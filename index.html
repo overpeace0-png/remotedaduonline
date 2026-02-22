@@ -1,72 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ANOMALY DICE V22 - REMOTE</title>
+    <title>ANOMALY REMOTE V30</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
         body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 20px; }
-        .st-box { border: 1px solid #333; padding: 15px; margin-bottom: 20px; font-size: 14px; background: #050505; }
-        .green { color: #0f0; text-shadow: 0 0 5px #0f0; } .red { color: #f00; }
+        .st-box { border: 1px solid #333; padding: 10px; margin-bottom: 20px; background: #050505; }
         button { width: 100%; padding: 15px; margin: 5px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; }
         button:active { background: #0f0; color: #000; }
-        #toast { visibility: hidden; min-width: 250px; background-color: #0f0; color: #000; text-align: center; border-radius: 5px; padding: 16px; position: fixed; z-index: 10; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 0 20px #0f0; }
-        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        .panic { background: #300; border-color: #f00; color: #f00; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <h2 style="letter-spacing: 3px;">ANOMALY COMMANDER V22</h2>
-    <div class="st-box">HUBUNGAN PUSAT: <span id="stTxt" class="red">OFFLINE</span></div>
+    <h2>ANOMALY COMMANDER V30</h2>
+    <div class="st-box">STATUS: <span id="stTxt">MENGHUBUNGKAN...</span></div>
     
     <button onclick="send('big')">MODE: BESAR (32-54)</button>
     <button onclick="send('sml')">MODE: KECIL (9-31)</button>
-    <button onclick="send('normal')" style="background:#333; border-color:#fff; color:#fff;">MODE: NORMAL (ACAK ASLI)</button>
     <button onclick="send('k1b2')">SEQUENCE: K1 B2</button>
     <button onclick="send('b1k2')">SEQUENCE: B1 K2</button>
+    <button onclick="send('normal')">MODE: NORMAL (OFF)</button>
     
-    <input id="unq" placeholder="Input: 1 2 3 4 5 6 1 2 3" style="width:90%; padding:12px; background:#111; color:#0f0; border:1px solid #333; margin:10px 0; text-align:center;">
-    <button onclick="sendUnique()" style="background:#001a33; border-color:#0080ff; color:#0080ff;">SET UNIQUE (9 DIGIT)</button>
-    
-    <div id="toast"></div>
+    <input id="unq" placeholder="Contoh: 6 6 1 2 3 4 5 5 6" style="width:90%; padding:10px; margin-top:10px; background:#111; color:#0f0; border:1px solid #333; text-align:center;">
+    <button onclick="sendUnique()">SET UNIQUE 9 DIGIT</button>
+
+    <button class="panic" onclick="send('panic')">!!! PANIC MODE (ON/OFF) !!!</button>
 
     <script>
         const pubnub = new PubNub({
             publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
             subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'CENTRAL_COMMANDER_335'
+            userId: 'COMMANDER_335'
         });
         const st = document.getElementById('stTxt');
-        const channel = 'Anomaly-Dice';
-
         pubnub.addListener({
             status: (s) => {
-                if (s.category === "PNConnectedCategory") { st.innerText = 'ONLINE'; st.className = 'green'; }
-                else { st.innerText = 'OFFLINE'; st.className = 'red'; }
+                if (s.category === "PNConnectedCategory") { st.innerText = 'ONLINE'; st.style.color = '#0f0'; }
             }
         });
-        pubnub.subscribe({ channels: [channel] });
+        pubnub.subscribe({ channels: ['Anomaly-Dice'] });
 
-        function showToast(m) {
-            const x = document.getElementById("toast");
-            x.innerText = "INJEKSI BERHASIL (MODE: " + m + ")";
-            x.className = "show";
-            setTimeout(() => { x.className = ""; }, 3000);
+        function send(m) {
+            pubnub.publish({ channel: 'Anomaly-Dice', message: { m: m } });
         }
 
-        window.send = (m) => {
-            pubnub.publish({ channel: channel, message: { m: m } }, (s, status) => {
-                if(!status.error) showToast(m.toUpperCase());
-            });
-        };
-
-        window.sendUnique = () => {
+        function sendUnique() {
             let v = document.getElementById('unq').value.trim();
-            if(v.split(/\s+/).length < 9) { alert("Masukin 9 angka dipisah spasi!"); return; }
-            pubnub.publish({ channel: channel, message: { m: 'unq', u: v } }, (s, status) => {
-                if(!status.error) showToast("UNIQUE SET");
-            });
-        };
+            pubnub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', u: v } });
+        }
     </script>
 </body>
 </html>
