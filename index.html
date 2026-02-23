@@ -1,107 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GHOST V53 MASTER</title>
+    <title>REMOTE V54 - DUAL SLOT</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --neon: #0f0; --err: #f00; --warn: #ff9800; --bg: #0d0d0d; }
-        body { background: var(--bg); color: var(--neon); font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
-        .card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 15px; margin-bottom: 12px; position: relative; }
-        h4 { margin: 0 0 10px 0; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        input { width: 85%; padding: 12px 5px; background: #000; color: #fff; border: 1px solid #444; border-radius: 5px; text-align: center; margin-bottom: 8px; font-size: 16px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        button { width: 100%; padding: 14px; margin: 4px 0; cursor: pointer; background: transparent; color: var(--neon); border: 1px solid var(--neon); border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        button:active { background: var(--neon); color: #000; }
-        .btn-reset { border-color: var(--warn); color: var(--warn); margin-top: 10px; }
-        .btn-panic { border-color: var(--err); color: var(--err); margin-top: 20px; }
-        
-        #toast { visibility: hidden; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); min-width: 280px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 1000; transition: 0.3s; box-shadow: 0 5px 20px rgba(0,0,0,0.8); }
-        #toast.def { background: #222; color: #fff; border: 1px solid #555; }
-        #toast.set { background: var(--neon); color: #000; }
-        #toast.err { background: var(--err); color: #fff; }
-        #toast.show { visibility: visible; }
+        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 15px; }
+        .card { border: 1px solid #333; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
+        input { width: 40%; padding: 10px; background: #111; color: #fff; border: 1px solid #0f0; border-radius: 4px; text-align: center; margin: 5px; }
+        button { width: 100%; padding: 12px; margin: 5px 0; background: transparent; color: #0f0; border: 1px solid #0f0; font-weight: bold; cursor: pointer; }
+        button:active { background: #0f0; color: #000; }
+        .toast { visibility: hidden; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #0f0; color: #000; padding: 10px; border-radius: 5px; z-index: 99; }
+        .show { visibility: visible; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h4>Konfigurasi Probabilitas</h4>
-        <div class="grid">
-            <div><label style="font-size:9px">PROB %</label><input type="number" id="pIn" placeholder="50"></div>
-            <div><label style="font-size:9px">BATAS A</label><input type="number" id="aIn" placeholder="DEF"></div>
-        </div>
-        <button class="btn-reset" onclick="resetConfig()">RESET KE DEFAULT (ADIL 50/50)</button>
+        <label>P (PROBABILITAS %)</label><br>
+        <input type="number" id="pIn" placeholder="50">
+    </div>
+
+    <div class="card" style="border-color: #00ffff;">
+        <label style="color: #00ffff;">SET KHUSUS BESAR (32-54)</label><br>
+        <input type="number" id="abIn" placeholder="A: 40">
+        <button style="color: #00ffff; border-color: #00ffff;" onclick="send('big')">SUNTIK BESAR</button>
+    </div>
+
+    <div class="card" style="border-color: #f0f;">
+        <label style="color: #f0f;">SET KHUSUS KECIL (9-31)</label><br>
+        <input type="number" id="akIn" placeholder="A: 20">
+        <button style="color: #f0f; border-color: #f0f;" onclick="send('sml')">SUNTIK KECIL</button>
     </div>
 
     <div class="card">
-        <h4>Operasional</h4>
-        <div class="grid">
-            <button onclick="sendMode('big')">BESAR (32-54)</button>
-            <button onclick="sendMode('sml')">KECIL (9-31)</button>
-        </div>
-        <input id="strIn" placeholder="Sequence (BKBK)" style="margin-top:10px;">
-        <button onclick="sendStr()">SUNTIK URUTAN</button>
+        <input id="strIn" placeholder="URUTAN (BKBK)" style="width: 85%">
+        <button onclick="send('str')">SUNTIK URUTAN</button>
     </div>
 
-    <div class="card">
-        <h4>Target Spesifik</h4>
-        <input type="number" id="tIn" placeholder="Unique Total (9-54)">
-        <button onclick="sendUnique()">SUNTIK UNIQUE</button>
-    </div>
+    <button onclick="send('normal') pulse('DEFAULT ADIL')">RESET KE NORMAL</button>
 
-    <button onclick="sendMode('normal')">NORMAL MODE</button>
-    <button class="btn-panic" onclick="sendMode('panic')">PANIC BUTTON</button>
-
-    <div id="toast"></div>
+    <div id="tst" class="toast"></div>
 
     <script>
-        const pub = new PubNub({
-            publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
-            subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'REMOTE_V53'
-        });
-
-        function showToast(msg, type) {
-            let t = document.getElementById("toast");
-            t.innerText = msg;
-            t.className = "show " + type;
-            setTimeout(() => { t.className = ""; }, 3000);
-        }
-
-        function resetConfig() {
-            document.getElementById('pIn').value = "";
-            document.getElementById('aIn').value = "";
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'normal', p: 50, a: 0 } });
-            showToast("⚠️ KONFIGURASI: DEFAULT (ADIL 50/50)", "def");
-        }
-
-        function sendMode(m) {
-            let p = document.getElementById('pIn').value;
-            let a = document.getElementById('aIn').value;
-            
-            // Logika Notifikasi Status
-            if (!p && !a) {
-                showToast("✅ MODE " + m.toUpperCase() + " (DEFAULT 50/50)", "def");
-            } else {
-                showToast("🚀 MODE " + m.toUpperCase() + " (CUSTOM P:"+(p||50)+" A:"+(a||'DEF')+")", "set");
-            }
-
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: m, p: p || 0, a: a || 0 } });
-        }
-
-        function sendStr() {
+        const pub = new PubNub({ publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860', subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299', userId: 'V54' });
+        function pulse(m) { let t = document.getElementById('tst'); t.innerText = m; t.className = "toast show"; setTimeout(()=>t.className="toast", 2500); }
+        function send(m) {
+            let p = document.getElementById('pIn').value || 50;
+            let ab = document.getElementById('abIn').value || 40;
+            let ak = document.getElementById('akIn').value || 20;
             let s = document.getElementById('strIn').value;
-            if(!s) { showToast("❌ GAGAL: URUTAN KOSONG", "err"); return; }
-            showToast("🧬 URUTAN [" + s.toUpperCase() + "] TERPASANG", "set");
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: s, p: document.getElementById('pIn').value || 0, a: document.getElementById('aIn').value || 0 } });
-        }
-
-        function sendUnique() {
-            let t = document.getElementById('tIn').value;
-            if(!t || t < 9 || t > 54) { showToast("❌ GAGAL: TARGET 9-54", "err"); return; }
-            showToast("🎯 TARGET TOTAL " + t + " TERINJEKSI", "set");
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', t: t } });
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: m, p: p, ab: ab, ak: ak, s: s } });
+            pulse("INJEKSI " + m.toUpperCase() + " BERHASIL!");
         }
     </script>
 </body>
