@@ -1,35 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>V46 PROBABILITY MASTER</title>
+    <title>GHOST REMOTE V47</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
         body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 10px; }
         .st-box { border: 1px solid #0f0; padding: 10px; margin-bottom: 8px; border-radius: 5px; background: #050505; }
-        button { width: 100%; padding: 12px; margin: 4px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; }
+        button { width: 100%; padding: 12px; margin: 4px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 5px; }
         input { width: 40%; padding: 10px; background: #000; color: #f0f; border: 1px solid #f0f; text-align: center; margin: 5px; }
         #toast { visibility: hidden; min-width: 200px; background: #0f0; color: #000; text-align: center; padding: 10px; position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); font-weight: bold; }
         #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
-    <h3>GHOST V46 MASTER</h3>
+    <h3>COMMANDER V47 - ULTIMATE</h3>
     
     <div class="st-box">
-        <label>P (%) :</label> <input type="number" id="pIn" value="100" placeholder="P">
-        <label>A (Angka) :</label> <input type="number" id="aIn" value="40" placeholder="A">
+        <label>UNIQUE (TARGET TOTAL 9-54):</label><br>
+        <input type="number" id="tIn" placeholder="Target" style="width:85%">
+        <button onclick="sendUnique()">SUNTIK UNIQUE TARGET</button>
+    </div>
+
+    <div class="st-box">
+        <label>P (%) :</label> <input type="number" id="pIn" value="100">
+        <label>A (Angka) :</label> <input type="number" id="aIn" value="40">
         <button onclick="sendProb()">SUNTIK PROBABILITAS</button>
     </div>
 
     <div class="st-box">
-        <input id="strIn" placeholder="SEQUENCE (BKBK)">
+        <input id="strIn" placeholder="SEQUENCE (BKBK)" style="width:85%">
         <button onclick="sendStr()">SUNTIK URUTAN</button>
     </div>
 
     <button onclick="sendMode('big')">BESAR</button>
     <button onclick="sendMode('sml')">KECIL</button>
     <button onclick="sendMode('normal')" style="color:#fff;">NORMAL</button>
-    <button onclick="sendMode('panic')" style="background:#400; color:#f00;">PANIC</button>
+    <button onclick="sendMode('panic')" style="background:#400; color:#f00;">PANIC BUTTON</button>
 
     <div id="toast"></div>
 
@@ -37,29 +43,38 @@
         const pub = new PubNub({
             publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
             subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'REMOTE_V46'
+            userId: 'REMOTE_V47'
         });
+
         function show(m) {
             let t = document.getElementById("toast"); t.innerText = m; t.className = "show";
-            setTimeout(() => { t.className = ""; }, 2000);
+            setTimeout(() => { t.className = ""; }, 2500);
         }
+
+        function getPA() { return { p: document.getElementById('pIn').value, a: document.getElementById('aIn').value }; }
+
+        function sendUnique() {
+            let t = document.getElementById('tIn').value;
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', t: t } });
+            show("UNIQUE TARGET " + t + " TERINJEKSI!");
+        }
+
         function sendProb() {
-            let p = document.getElementById('pIn').value;
-            let a = document.getElementById('aIn').value;
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'normal', p: p, a: a } });
-            show("PROBABILITAS P" + p + "% A" + a + " TERINJEKSI!");
+            let pa = getPA();
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'normal', p: pa.p, a: pa.a } });
+            show("P" + pa.p + "% A" + pa.a + " SET!");
         }
+
         function sendStr() {
-            let val = document.getElementById('strIn').value;
-            let p = document.getElementById('pIn').value;
-            let a = document.getElementById('aIn').value;
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: val, p: p, a: a } });
-            show("STR + PROB TERINJEKSI!");
+            let s = document.getElementById('strIn').value;
+            let pa = getPA();
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: s, p: pa.p, a: pa.a } });
+            show("STR [" + s.toUpperCase() + "] TERINJEKSI!");
         }
+
         function sendMode(m) {
-            let p = document.getElementById('pIn').value;
-            let a = document.getElementById('aIn').value;
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: m, p: p, a: a } });
+            let pa = getPA();
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: m, p: pa.p, a: pa.a } });
             show("MODE " + m.toUpperCase() + " AKTIF!");
         }
     </script>
