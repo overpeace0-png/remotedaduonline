@@ -1,72 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GHOST COMMANDER V62</title>
+    <title>GHOST COMMANDER V64</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 10px; text-align: center; }
-        .card { border: 1px solid #333; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #080808; }
-        label { font-size: 10px; color: #888; display: block; margin-bottom: 5px; text-align: left; }
-        input { width: 100%; box-sizing: border-box; background: #000; border: 1px solid #444; color: #fff; padding: 12px; margin-bottom: 8px; border-radius: 5px; text-align: center; font-size: 16px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        button { width: 100%; padding: 14px; background: transparent; color: #0f0; border: 1px solid #0f0; font-weight: bold; cursor: pointer; border-radius: 6px; }
-        button:active { background: #0f0; color: #000; }
+        body { background: #000; color: #0f0; font-family: monospace; padding: 10px; text-align: center; }
+        .card { border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 10px; background: #080808; }
+        label { font-size: 11px; color: #0f0; display: block; margin-bottom: 5px; text-align: left; opacity: 0.8; }
+        input { width: 100%; box-sizing: border-box; background: #000; border: 1px solid #444; color: #fff; padding: 14px; margin-bottom: 10px; border-radius: 5px; text-align: center; font-size: 18px; }
+        input:focus { border-color: #0f0; outline: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { width: 100%; padding: 16px; background: #001a00; color: #0f0; border: 1px solid #0f0; font-weight: bold; cursor: pointer; border-radius: 8px; text-transform: uppercase; }
+        button:active { background: #0f0; color: #000; transform: scale(0.98); }
         .btn-big { border-color: #00ffff; color: #00ffff; }
         .btn-sml { border-color: #ff00ff; color: #ff00ff; }
-        #toast { visibility: hidden; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #0f0; color: #000; padding: 10px; font-weight: bold; border-radius: 5px; z-index: 100; }
+        #toast { visibility: hidden; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #0f0; color: #000; padding: 10px 20px; font-weight: bold; border-radius: 20px; z-index: 100; }
         #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <label>POWER (PROBABILITAS %)</label>
+        <label>POWER (P%)</label>
         <input type="number" id="pIn" value="100">
+        
         <div class="grid">
             <div>
-                <label>BATAS ATAS BESAR (32-54)</label>
+                <label>A-BESAR (MAX)</label>
                 <input type="number" id="abIn" value="40">
-                <button class="btn-big" onclick="send('big')">SET BESAR</button>
+                <button class="btn-big" onclick="send('big')">MODE BESAR</button>
             </div>
             <div>
-                <label>BATAS BAWAH KECIL (9-31)</label>
+                <label>A-KECIL (MIN)</label>
                 <input type="number" id="akIn" value="20">
-                <button class="btn-sml" onclick="send('sml')">SET KECIL</button>
+                <button class="btn-sml" onclick="send('sml')">MODE KECIL</button>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <label>UNIQUE MODE (TARGET ANGKA)</label>
-        <input type="number" id="tIn" placeholder="Contoh: 42">
-        <button onclick="send('unq')">LOCK TARGET UNIQUE</button>
-    </div>
-
-    <div class="card">
-        <label>SEQUENCE MODE (B = BESAR, K = KECIL)</label>
+        <label>SEQUENCE (B = BESAR, K = KECIL)</label>
         <input id="strIn" placeholder="Contoh: BBKK atau BKBK">
         <button onclick="send('str')">SUNTIK URUTAN</button>
     </div>
 
-    <button onclick="send('normal')">RESET / NORMAL</button>
+    <button onclick="send('normal')" style="border-color: #fff; color: #fff; margin-top: 10px;">RESET KE NORMAL</button>
 
-    <div id="toast">EXECUTED</div>
+    <div id="toast">MODE UPDATED</div>
 
     <script>
-        const pub = new PubNub({ publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860', subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299', userId: 'REMOTE_V62' });
+        const pub = new PubNub({ publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860', subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299', userId: 'REMOTE_V64' });
         function send(m) {
-            let data = {
+            let d = {
                 m: m,
                 p: parseInt(document.getElementById('pIn').value) || 100,
                 ab: parseInt(document.getElementById('abIn').value) || 54,
                 ak: parseInt(document.getElementById('akIn').value) || 9,
-                t: parseInt(document.getElementById('tIn').value) || 0,
                 s: document.getElementById('strIn').value || ''
             };
-            pub.publish({ channel: 'Anomaly-Dice', message: data });
-            let t = document.getElementById('toast');
-            t.innerText = "MODE " + m.toUpperCase() + " AKTIF";
+            pub.publish({ channel: 'Anomaly-Dice', message: d });
+            let t = document.getElementById('toast'); t.innerText = "MODE " + m.toUpperCase() + " AKTIF";
             t.className = "show"; setTimeout(() => t.className = "", 1500);
         }
     </script>
