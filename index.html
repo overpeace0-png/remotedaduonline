@@ -1,52 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ANOMALY REMOTE V30</title>
+    <title>BANDAR REMOTE V36</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 20px; }
-        .st-box { border: 1px solid #333; padding: 10px; margin-bottom: 20px; background: #050505; }
-        button { width: 100%; padding: 15px; margin: 5px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; padding: 20px; }
+        .st-box { border: 2px solid #333; padding: 15px; margin-bottom: 15px; background: #0a0a0a; border-radius: 10px; }
+        button { width: 100%; padding: 15px; margin: 8px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 5px; text-transform: uppercase; }
         button:active { background: #0f0; color: #000; }
-        .panic { background: #300; border-color: #f00; color: #f00; margin-top: 20px; }
+        input { width: 85%; padding: 12px; background: #111; color: #f0f; border: 1px solid #f0f; text-align: center; font-size: 18px; letter-spacing: 3px; border-radius: 5px; }
+        .panic { background: #400; border-color: #f00; color: #f00; }
+        
+        /* TOAST STYLE */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #0f0; color: #000;
+            text-align: center; border-radius: 5px; padding: 16px; position: fixed;
+            z-index: 1; left: 50%; bottom: 30px; transform: translateX(-50%);
+            font-weight: bold; box-shadow: 0 0 20px #0f0;
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
 <body>
-    <h2>ANOMALY COMMANDER V30</h2>
-    <div class="st-box">STATUS: <span id="stTxt">MENGHUBUNGKAN...</span></div>
+    <h2>COMMANDER V36 - GHOST</h2>
+    <div class="st-box">STATUS: <span id="stTxt" style="color:red">OFFLINE</span></div>
     
-    <button onclick="send('big')">MODE: BESAR (32-54)</button>
-    <button onclick="send('sml')">MODE: KECIL (9-31)</button>
-    <button onclick="send('k1b2')">SEQUENCE: K1 B2</button>
-    <button onclick="send('b1k2')">SEQUENCE: B1 K2</button>
-    <button onclick="send('normal')">MODE: NORMAL (OFF)</button>
-    
-    <input id="unq" placeholder="Contoh: 6 6 1 2 3 4 5 5 6" style="width:90%; padding:10px; margin-top:10px; background:#111; color:#0f0; border:1px solid #333; text-align:center;">
-    <button onclick="sendUnique()">SET UNIQUE 9 DIGIT</button>
+    <div class="st-box">
+        <label>URUTAN CUSTOM (B/K):</label><br><br>
+        <input id="strInput" placeholder="CONTOH: BKB" maxlength="20">
+        <button onclick="sendStr()">SUNTIK URUTAN</button>
+    </div>
 
-    <button class="panic" onclick="send('panic')">!!! PANIC MODE (ON/OFF) !!!</button>
+    <button onclick="sendDirect('big')">MODE: BESAR TERUS</button>
+    <button onclick="sendDirect('sml')">MODE: KECIL TERUS</button>
+    <button onclick="sendDirect('normal')">MODE: NORMAL</button>
+    
+    <button class="panic" onclick="sendDirect('panic')">!!! PANIC BUTTON !!!</button>
+
+    <div id="toast">INJEKSI BERHASIL!</div>
 
     <script>
         const pubnub = new PubNub({
             publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
             subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'COMMANDER_335'
+            userId: 'REMOTE_BANDAR'
         });
-        const st = document.getElementById('stTxt');
+
         pubnub.addListener({
             status: (s) => {
-                if (s.category === "PNConnectedCategory") { st.innerText = 'ONLINE'; st.style.color = '#0f0'; }
+                if (s.category === "PNConnectedCategory") {
+                    document.getElementById('stTxt').innerText = 'ONLINE';
+                    document.getElementById('stTxt').style.color = '#0f0';
+                }
             }
         });
         pubnub.subscribe({ channels: ['Anomaly-Dice'] });
 
-        function send(m) {
-            pubnub.publish({ channel: 'Anomaly-Dice', message: { m: m } });
+        function showToast(msg) {
+            let t = document.getElementById("toast");
+            t.innerText = msg;
+            t.className = "show";
+            setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
         }
 
-        function sendUnique() {
-            let v = document.getElementById('unq').value.trim();
-            pubnub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', u: v } });
+        function sendStr() {
+            let val = document.getElementById('strInput').value.trim();
+            if(val !== "") {
+                pubnub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: val } });
+                showToast("URUTAN [" + val.toUpperCase() + "] TERINJEKSI!");
+            }
+        }
+
+        function sendDirect(mode) {
+            pubnub.publish({ channel: 'Anomaly-Dice', message: { m: mode } });
+            showToast("MODE " + mode.toUpperCase() + " AKTIF!");
         }
     </script>
 </body>
