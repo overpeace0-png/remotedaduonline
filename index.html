@@ -1,72 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MASTER REMOTE V56</title>
+    <title>GHOST MASTER V59</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 10px; margin:0; }
-        .card { border: 1px solid #333; padding: 12px; margin-bottom: 10px; border-radius: 8px; background: #080808; }
-        label { font-size: 11px; color: #888; display: block; margin-bottom: 5px; }
-        input { width: 42%; padding: 12px 5px; background: #000; color: #fff; border: 1px solid #444; border-radius: 4px; text-align: center; margin: 5px; font-size: 16px; }
-        .full-in { width: 90% !important; }
-        button { width: 100%; padding: 15px; margin: 5px 0; background: transparent; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        button:active { background: #0f0; color: #000; }
-        .btn-big { border-color: #00ffff; color: #00ffff; }
-        .btn-sml { border-color: #f0f; color: #f0f; }
-        .btn-panic { border-color: red; color: red; margin-top: 15px; }
-        #tst { visibility: hidden; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #0f0; color: #000; padding: 12px; border-radius: 5px; font-weight: bold; z-index: 99; }
-        #tst.show { visibility: visible; }
+        body { background: #000; color: #0f0; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .panel { border: 2px solid #0f0; border-radius: 15px; padding: 20px; max-width: 400px; margin: auto; box-shadow: 0 0 20px #0f06; }
+        .status-bar { background: #111; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-weight: bold; border-left: 5px solid #0f0; }
+        
+        .section { margin-bottom: 15px; text-align: left; }
+        label { font-size: 10px; color: #888; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        
+        input { width: 100%; box-sizing: border-box; background: #111; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 8px; font-size: 18px; text-align: center; }
+        input:focus { border-color: #0f0; outline: none; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { width: 100%; padding: 15px; margin-top: 5px; cursor: pointer; background: transparent; color: #0f0; border: 2px solid #0f0; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        button:active { background: #0f0; color: #000; transform: scale(0.95); }
+        
+        .btn-big { border-color: #00e5ff; color: #00e5ff; }
+        .btn-sml { border-color: #ff00ff; color: #ff00ff; }
+        .btn-panic { border-color: #ff3d00; color: #ff3d00; margin-top: 20px; }
+
+        #toast { visibility: hidden; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #0f0; color: #000; padding: 12px 25px; border-radius: 50px; font-weight: bold; }
+        #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <label>P (PROBABILITAS %)</label>
-        <input type="number" id="pIn" placeholder="50" class="full-in">
-    </div>
+    <div class="panel">
+        <div class="status-bar">STATUS: <span id="curMode">NORMAL</span></div>
 
-    <div class="card">
-        <label>SETTING RANGE (A)</label>
-        <input type="number" id="abIn" placeholder="A-Besar (32-54)">
-        <input type="number" id="akIn" placeholder="A-Kecil (9-31)">
-        
-        <div style="display: flex; gap: 8px; margin-top: 10px;">
-            <button class="btn-big" onclick="send('big')">MODE BESAR</button>
-            <button class="btn-sml" onclick="send('sml')">MODE KECIL</button>
+        <div class="section">
+            <label>Probabilitas (P%)</label>
+            <input type="number" id="pIn" value="100">
         </div>
+
+        <div class="grid">
+            <div class="section">
+                <label>Batas A-Besar</label>
+                <input type="number" id="abIn" value="35">
+                <button class="btn-big" onclick="send('big')">SET BESAR</button>
+            </div>
+            <div class="section">
+                <label>Batas A-Kecil</label>
+                <input type="number" id="akIn" value="25">
+                <button class="btn-sml" onclick="send('sml')">SET KECIL</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <label>Unique Target (9-54)</label>
+            <input type="number" id="tIn" placeholder="Contoh: 42">
+            <button onclick="send('unq')">SUNTIK UNIQUE</button>
+        </div>
+
+        <button onclick="send('normal')">RESET NORMAL</button>
+        <button class="btn-panic" onclick="send('panic')">PANIC BUTTON</button>
     </div>
 
-    <div class="card">
-        <label>MODE KHUSUS</label>
-        <input type="number" id="tIn" class="full-in" placeholder="Target Unique (9-54)">
-        <button onclick="send('unq')">SUNTIK UNIQUE</button>
-        
-        <input id="strIn" class="full-in" placeholder="Sequence (BKBK)" style="margin-top:10px;">
-        <button onclick="send('str')">SUNTIK SEQUENCE</button>
-    </div>
-
-    <button onclick="send('normal')">RESET TO NORMAL</button>
-    <button class="btn-panic" onclick="send('panic')">PANIC BUTTON</button>
-
-    <div id="tst"></div>
+    <div id="toast">INJEKSI BERHASIL</div>
 
     <script>
-        const pub = new PubNub({ publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860', subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299', userId: 'V56' });
-        function pulse(m) { let t = document.getElementById('tst'); t.innerText = m; t.className = "show"; setTimeout(()=>t.className="", 2500); }
-        function send(m) {
-            let p = document.getElementById('pIn').value || 50;
-            let ab = document.getElementById('abIn').value || 54;
-            let ak = document.getElementById('akIn').value || 9;
-            let t = document.getElementById('tIn').value || 0;
-            let s = document.getElementById('strIn').value;
+        const pub = new PubNub({
+            publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
+            subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
+            userId: 'WEB_REMOTE_V59'
+        });
 
-            // Validasi Sederhana
-            if(m === 'big' && ab < 32) { pulse("⚠️ A-BESAR MINIMAL 32!"); return; }
-            if(m === 'sml' && ak > 31) { pulse("⚠️ A-KECIL MAKSIMAL 31!"); return; }
+        function send(mode) {
+            let data = {
+                m: mode,
+                p: parseInt(document.getElementById('pIn').value) || 50,
+                ab: parseInt(document.getElementById('abIn').value) || 54,
+                ak: parseInt(document.getElementById('akIn').value) || 9,
+                t: parseInt(document.getElementById('tIn').value) || 0
+            };
 
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: m, p: p, ab: ab, ak: ak, t: t, s: s } });
-            pulse(m.toUpperCase() + " AKTIF!");
+            // Proteksi Logika
+            if(mode === 'big' && data.ab < 32) data.ab = 32;
+            if(mode === 'sml' && data.ak > 31) data.ak = 31;
+
+            pub.publish({ channel: 'Anomaly-Dice', message: data });
+            
+            document.getElementById('curMode').innerText = mode.toUpperCase();
+            let t = document.getElementById('toast');
+            t.innerText = "MODE " + mode.toUpperCase() + " DIAKTIFKAN";
+            t.className = "show";
+            setTimeout(() => { t.className = ""; }, 2000);
         }
     </script>
 </body>
