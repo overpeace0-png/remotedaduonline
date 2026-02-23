@@ -1,52 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GHOST V50 COMMANDER</title>
+    <title>GHOST V53 MASTER</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --neon: #0f0; --error: #f00; --bg: #0a0a0a; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Segoe UI', monospace; text-align: center; margin: 0; padding: 20px; }
-        .card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h3 { margin-top: 0; color: #fff; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        label { display: block; font-size: 10px; margin-bottom: 5px; color: #888; text-align: left; }
-        input { width: 90%; padding: 12px 5px; background: #000; color: #fff; border: 1px solid #444; border-radius: 6px; text-align: center; font-size: 16px; margin-bottom: 5px; }
-        input:focus { border-color: var(--neon); outline: none; }
-
-        button { width: 100%; padding: 15px; margin-top: 5px; cursor: pointer; background: transparent; color: var(--neon); border: 1px solid var(--neon); font-weight: bold; border-radius: 6px; transition: 0.3s; }
+        :root { --neon: #0f0; --err: #f00; --warn: #ff9800; --bg: #0d0d0d; }
+        body { background: var(--bg); color: var(--neon); font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
+        .card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 15px; margin-bottom: 12px; position: relative; }
+        h4 { margin: 0 0 10px 0; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        input { width: 85%; padding: 12px 5px; background: #000; color: #fff; border: 1px solid #444; border-radius: 5px; text-align: center; margin-bottom: 8px; font-size: 16px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        button { width: 100%; padding: 14px; margin: 4px 0; cursor: pointer; background: transparent; color: var(--neon); border: 1px solid var(--neon); border-radius: 6px; font-weight: bold; transition: 0.2s; }
         button:active { background: var(--neon); color: #000; }
-        .btn-main { background: rgba(0, 255, 0, 0.05); }
-        .btn-panic { border-color: var(--error); color: var(--error); margin-top: 20px; }
+        .btn-reset { border-color: var(--warn); color: var(--warn); margin-top: 10px; }
+        .btn-panic { border-color: var(--err); color: var(--err); margin-top: 20px; }
         
-        #toast { visibility: hidden; min-width: 250px; background: var(--neon); color: #000; text-align: center; padding: 16px; position: fixed; left: 50%; top: 20px; transform: translateX(-50%); font-weight: bold; border-radius: 8px; z-index: 100; transition: 0.3s; }
-        #toast.err { background: var(--error); color: #fff; }
+        #toast { visibility: hidden; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); min-width: 280px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 1000; transition: 0.3s; box-shadow: 0 5px 20px rgba(0,0,0,0.8); }
+        #toast.def { background: #222; color: #fff; border: 1px solid #555; }
+        #toast.set { background: var(--neon); color: #000; }
+        #toast.err { background: var(--err); color: #fff; }
         #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h3>1. Konfigurasi Probabilitas</h3>
+        <h4>Konfigurasi Probabilitas</h4>
         <div class="grid">
-            <div><label>P (PROB %)</label><input type="number" id="pIn" value="100"></div>
-            <div><label>A (BATAS ANGKA)</label><input type="number" id="aIn" value="35"></div>
+            <div><label style="font-size:9px">PROB %</label><input type="number" id="pIn" placeholder="50"></div>
+            <div><label style="font-size:9px">BATAS A</label><input type="number" id="aIn" placeholder="DEF"></div>
         </div>
+        <button class="btn-reset" onclick="resetConfig()">RESET KE DEFAULT (ADIL 50/50)</button>
     </div>
 
     <div class="card">
-        <h3>2. Mode Operasional</h3>
-        <button class="btn-main" onclick="validateAndSend('big')">BESAR (32-54)</button>
-        <button class="btn-main" onclick="validateAndSend('sml')">KECIL (9-31)</button>
-        <button onclick="sendStr()">SUNTIK URUTAN (BKBK)</button>
-        <input id="strIn" placeholder="Input: BKBK" style="width:90%; margin-top:10px;">
+        <h4>Operasional</h4>
+        <div class="grid">
+            <button onclick="sendMode('big')">BESAR (32-54)</button>
+            <button onclick="sendMode('sml')">KECIL (9-31)</button>
+        </div>
+        <input id="strIn" placeholder="Sequence (BKBK)" style="margin-top:10px;">
+        <button onclick="sendStr()">SUNTIK URUTAN</button>
     </div>
 
     <div class="card">
-        <h3>3. Mode Khusus</h3>
-        <input type="number" id="tIn" placeholder="Target Total (9-54)" style="width:90%;">
-        <button onclick="sendUnique()">SUNTIK UNIQUE TARGET</button>
+        <h4>Target Spesifik</h4>
+        <input type="number" id="tIn" placeholder="Unique Total (9-54)">
+        <button onclick="sendUnique()">SUNTIK UNIQUE</button>
     </div>
 
     <button onclick="sendMode('normal')">NORMAL MODE</button>
@@ -58,53 +59,49 @@
         const pub = new PubNub({
             publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
             subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'REMOTE_V50'
+            userId: 'REMOTE_V53'
         });
 
-        function show(msg, isErr = false) {
+        function showToast(msg, type) {
             let t = document.getElementById("toast");
             t.innerText = msg;
-            t.className = isErr ? "show err" : "show";
+            t.className = "show " + type;
             setTimeout(() => { t.className = ""; }, 3000);
         }
 
-        function validateAndSend(mode) {
-            let p = parseInt(document.getElementById('pIn').value);
-            let a = parseInt(document.getElementById('aIn').value);
-
-            // LOGIKA VALIDASI
-            if (mode === 'big' && a < 32) {
-                show("GAGAL: BATAS A UNTUK BESAR MINIMAL 32!", true);
-                return;
-            }
-            if (mode === 'sml' && a > 31) {
-                show("GAGAL: BATAS A UNTUK KECIL MAKSIMAL 31!", true);
-                return;
-            }
-
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: mode, p: p, a: a } });
-            show("INJEKSI " + mode.toUpperCase() + " BERHASIL!");
+        function resetConfig() {
+            document.getElementById('pIn').value = "";
+            document.getElementById('aIn').value = "";
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'normal', p: 50, a: 0 } });
+            showToast("⚠️ KONFIGURASI: DEFAULT (ADIL 50/50)", "def");
         }
 
-        function sendUnique() {
-            let t = document.getElementById('tIn').value;
-            if (t < 9 || t > 54) { show("GAGAL: TARGET HARUS 9-54!", true); return; }
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', t: t } });
-            show("UNIQUE " + t + " BERHASIL!");
+        function sendMode(m) {
+            let p = document.getElementById('pIn').value;
+            let a = document.getElementById('aIn').value;
+            
+            // Logika Notifikasi Status
+            if (!p && !a) {
+                showToast("✅ MODE " + m.toUpperCase() + " (DEFAULT 50/50)", "def");
+            } else {
+                showToast("🚀 MODE " + m.toUpperCase() + " (CUSTOM P:"+(p||50)+" A:"+(a||'DEF')+")", "set");
+            }
+
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: m, p: p || 0, a: a || 0 } });
         }
 
         function sendStr() {
             let s = document.getElementById('strIn').value;
-            let p = document.getElementById('pIn').value;
-            let a = document.getElementById('aIn').value;
-            if(!s) { show("GAGAL: URUTAN KOSONG!", true); return; }
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: s, p: p, a: a } });
-            show("URUTAN TERINJEKSI!");
+            if(!s) { showToast("❌ GAGAL: URUTAN KOSONG", "err"); return; }
+            showToast("🧬 URUTAN [" + s.toUpperCase() + "] TERPASANG", "set");
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: s, p: document.getElementById('pIn').value || 0, a: document.getElementById('aIn').value || 0 } });
         }
 
-        function sendMode(m) {
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: m } });
-            show("MODE " + m.toUpperCase() + " AKTIF!");
+        function sendUnique() {
+            let t = document.getElementById('tIn').value;
+            if(!t || t < 9 || t > 54) { showToast("❌ GAGAL: TARGET 9-54", "err"); return; }
+            showToast("🎯 TARGET TOTAL " + t + " TERINJEKSI", "set");
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', t: t } });
         }
     </script>
 </body>
