@@ -1,37 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BANDAR TOTAL V38</title>
+    <title>V41 MASTER REMOTE</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 15px; }
-        .st-box { border: 1px solid #0f0; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #050505; }
-        button { width: 100%; padding: 12px; margin: 5px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 5px; }
+        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 10px; }
+        .st-box { border: 1px solid #333; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: #050505; }
+        button { width: 100%; padding: 14px; margin: 4px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 5px; }
         button:active { background: #0f0; color: #000; }
-        input { width: 85%; padding: 10px; background: #000; color: #f0f; border: 1px solid #f0f; text-align: center; margin-bottom: 5px; font-size: 16px; }
-        #toast { visibility: hidden; min-width: 200px; background: #0f0; color: #000; text-align: center; padding: 10px; position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); font-weight: bold; border-radius: 5px; }
+        input { width: 80%; padding: 10px; background: #000; color: #f0f; border: 1px solid #f0f; text-align: center; margin-bottom: 5px; border-radius: 4px; }
+        #toast { visibility: hidden; min-width: 200px; background: #0f0; color: #000; text-align: center; padding: 12px; position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); font-weight: bold; border-radius: 8px; }
         #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
-    <h3>COMMANDER V38 - TOTAL TARGET</h3>
-    
+    <h3>GHOST V41 MASTER</h3>
     <div class="st-box">
-        <label>TARGET TOTAL (9 - 54):</label><br><br>
-        <input type="number" id="totalIn" placeholder="Contoh: 9 atau 45" min="9" max="54">
-        <button onclick="sendTotal()" style="color:#f0f; border-color:#f0f;">SUNTIK TOTAL ANGKA</button>
+        <input type="number" id="totalIn" placeholder="TARGET TOTAL (9-54)">
+        <button onclick="send('unq', 't')">SUNTIK TOTAL</button>
     </div>
-
     <div class="st-box">
-        <label>URUTAN STR (BKB):</label><br><br>
-        <input id="strIn" placeholder="Contoh: BKB">
-        <button onclick="sendStr()">SUNTIK URUTAN</button>
+        <input id="strIn" placeholder="URUTAN (Contoh: BKBK)">
+        <button onclick="send('str', 's')">SUNTIK URUTAN</button>
     </div>
-
-    <button onclick="sendMode('big')">BESAR (32-54)</button>
-    <button onclick="sendMode('sml')">KECIL (9-31)</button>
-    <button onclick="sendMode('normal')" style="color:#fff; border-color:#fff;">NORMAL</button>
-    <button onclick="sendMode('panic')" style="background:#400; color:#f00; border-color:#f00;">PANIC BUTTON</button>
+    <button onclick="sendDirect('big')">MODE: BESAR</button>
+    <button onclick="sendDirect('sml')">MODE: KECIL</button>
+    <button onclick="sendDirect('normal')" style="color:#fff;">NORMAL</button>
+    <button onclick="sendDirect('panic')" style="background:#400; color:#f00;">PANIC BUTTON</button>
 
     <div id="toast"></div>
 
@@ -39,31 +34,22 @@
         const pub = new PubNub({
             publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
             subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'REMOTE_V38'
+            userId: 'REMOTE_V41'
         });
-
-        function showToast(m) {
+        function show(m) {
             let t = document.getElementById("toast"); t.innerText = m; t.className = "show";
-            setTimeout(() => { t.className = ""; }, 2500);
+            setTimeout(() => { t.className = ""; }, 2000);
         }
-
-        function sendTotal() {
-            let val = document.getElementById('totalIn').value;
-            if (val >= 9 && val <= 54) {
-                pub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', t: val } });
-                showToast("TARGET TOTAL [" + val + "] TERINJEKSI!");
-            } else { alert("Input harus 9 sampai 54!"); }
+        function send(m, type) {
+            let val = type === 't' ? document.getElementById('totalIn').value : document.getElementById('strIn').value;
+            let msg = { m: m };
+            if(type === 't') msg.t = val; else msg.s = val;
+            pub.publish({ channel: 'Anomaly-Dice', message: msg });
+            show("INJEKSI BERHASIL!");
         }
-
-        function sendStr() {
-            let val = document.getElementById('strIn').value.trim();
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: val } });
-            showToast("SEQUENCE [" + val.toUpperCase() + "] TERINJEKSI!");
-        }
-
-        function sendMode(m) {
+        function sendDirect(m) {
             pub.publish({ channel: 'Anomaly-Dice', message: { m: m } });
-            showToast("MODE " + m.toUpperCase() + " AKTIF!");
+            show("MODE " + m.toUpperCase() + " AKTIF!");
         }
     </script>
 </body>
