@@ -1,41 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GHOST REMOTE V47</title>
+    <title>GHOST V50 COMMANDER</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 10px; }
-        .st-box { border: 1px solid #0f0; padding: 10px; margin-bottom: 8px; border-radius: 5px; background: #050505; }
-        button { width: 100%; padding: 12px; margin: 4px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 5px; }
-        input { width: 40%; padding: 10px; background: #000; color: #f0f; border: 1px solid #f0f; text-align: center; margin: 5px; }
-        #toast { visibility: hidden; min-width: 200px; background: #0f0; color: #000; text-align: center; padding: 10px; position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); font-weight: bold; }
+        :root { --neon: #0f0; --error: #f00; --bg: #0a0a0a; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Segoe UI', monospace; text-align: center; margin: 0; padding: 20px; }
+        .card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h3 { margin-top: 0; color: #fff; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { display: block; font-size: 10px; margin-bottom: 5px; color: #888; text-align: left; }
+        input { width: 90%; padding: 12px 5px; background: #000; color: #fff; border: 1px solid #444; border-radius: 6px; text-align: center; font-size: 16px; margin-bottom: 5px; }
+        input:focus { border-color: var(--neon); outline: none; }
+
+        button { width: 100%; padding: 15px; margin-top: 5px; cursor: pointer; background: transparent; color: var(--neon); border: 1px solid var(--neon); font-weight: bold; border-radius: 6px; transition: 0.3s; }
+        button:active { background: var(--neon); color: #000; }
+        .btn-main { background: rgba(0, 255, 0, 0.05); }
+        .btn-panic { border-color: var(--error); color: var(--error); margin-top: 20px; }
+        
+        #toast { visibility: hidden; min-width: 250px; background: var(--neon); color: #000; text-align: center; padding: 16px; position: fixed; left: 50%; top: 20px; transform: translateX(-50%); font-weight: bold; border-radius: 8px; z-index: 100; transition: 0.3s; }
+        #toast.err { background: var(--error); color: #fff; }
         #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
-    <h3>COMMANDER V47 - ULTIMATE</h3>
-    
-    <div class="st-box">
-        <label>UNIQUE (TARGET TOTAL 9-54):</label><br>
-        <input type="number" id="tIn" placeholder="Target" style="width:85%">
+
+    <div class="card">
+        <h3>1. Konfigurasi Probabilitas</h3>
+        <div class="grid">
+            <div><label>P (PROB %)</label><input type="number" id="pIn" value="100"></div>
+            <div><label>A (BATAS ANGKA)</label><input type="number" id="aIn" value="35"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>2. Mode Operasional</h3>
+        <button class="btn-main" onclick="validateAndSend('big')">BESAR (32-54)</button>
+        <button class="btn-main" onclick="validateAndSend('sml')">KECIL (9-31)</button>
+        <button onclick="sendStr()">SUNTIK URUTAN (BKBK)</button>
+        <input id="strIn" placeholder="Input: BKBK" style="width:90%; margin-top:10px;">
+    </div>
+
+    <div class="card">
+        <h3>3. Mode Khusus</h3>
+        <input type="number" id="tIn" placeholder="Target Total (9-54)" style="width:90%;">
         <button onclick="sendUnique()">SUNTIK UNIQUE TARGET</button>
     </div>
 
-    <div class="st-box">
-        <label>P (%) :</label> <input type="number" id="pIn" value="100">
-        <label>A (Angka) :</label> <input type="number" id="aIn" value="40">
-        <button onclick="sendProb()">SUNTIK PROBABILITAS</button>
-    </div>
-
-    <div class="st-box">
-        <input id="strIn" placeholder="SEQUENCE (BKBK)" style="width:85%">
-        <button onclick="sendStr()">SUNTIK URUTAN</button>
-    </div>
-
-    <button onclick="sendMode('big')">BESAR</button>
-    <button onclick="sendMode('sml')">KECIL</button>
-    <button onclick="sendMode('normal')" style="color:#fff;">NORMAL</button>
-    <button onclick="sendMode('panic')" style="background:#400; color:#f00;">PANIC BUTTON</button>
+    <button onclick="sendMode('normal')">NORMAL MODE</button>
+    <button class="btn-panic" onclick="sendMode('panic')">PANIC BUTTON</button>
 
     <div id="toast"></div>
 
@@ -43,38 +58,52 @@
         const pub = new PubNub({
             publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
             subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'REMOTE_V47'
+            userId: 'REMOTE_V50'
         });
 
-        function show(m) {
-            let t = document.getElementById("toast"); t.innerText = m; t.className = "show";
-            setTimeout(() => { t.className = ""; }, 2500);
+        function show(msg, isErr = false) {
+            let t = document.getElementById("toast");
+            t.innerText = msg;
+            t.className = isErr ? "show err" : "show";
+            setTimeout(() => { t.className = ""; }, 3000);
         }
 
-        function getPA() { return { p: document.getElementById('pIn').value, a: document.getElementById('aIn').value }; }
+        function validateAndSend(mode) {
+            let p = parseInt(document.getElementById('pIn').value);
+            let a = parseInt(document.getElementById('aIn').value);
+
+            // LOGIKA VALIDASI
+            if (mode === 'big' && a < 32) {
+                show("GAGAL: BATAS A UNTUK BESAR MINIMAL 32!", true);
+                return;
+            }
+            if (mode === 'sml' && a > 31) {
+                show("GAGAL: BATAS A UNTUK KECIL MAKSIMAL 31!", true);
+                return;
+            }
+
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: mode, p: p, a: a } });
+            show("INJEKSI " + mode.toUpperCase() + " BERHASIL!");
+        }
 
         function sendUnique() {
             let t = document.getElementById('tIn').value;
+            if (t < 9 || t > 54) { show("GAGAL: TARGET HARUS 9-54!", true); return; }
             pub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', t: t } });
-            show("UNIQUE TARGET " + t + " TERINJEKSI!");
-        }
-
-        function sendProb() {
-            let pa = getPA();
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'normal', p: pa.p, a: pa.a } });
-            show("P" + pa.p + "% A" + pa.a + " SET!");
+            show("UNIQUE " + t + " BERHASIL!");
         }
 
         function sendStr() {
             let s = document.getElementById('strIn').value;
-            let pa = getPA();
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: s, p: pa.p, a: pa.a } });
-            show("STR [" + s.toUpperCase() + "] TERINJEKSI!");
+            let p = document.getElementById('pIn').value;
+            let a = document.getElementById('aIn').value;
+            if(!s) { show("GAGAL: URUTAN KOSONG!", true); return; }
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: s, p: p, a: a } });
+            show("URUTAN TERINJEKSI!");
         }
 
         function sendMode(m) {
-            let pa = getPA();
-            pub.publish({ channel: 'Anomaly-Dice', message: { m: m, p: pa.p, a: pa.a } });
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: m } });
             show("MODE " + m.toUpperCase() + " AKTIF!");
         }
     </script>
