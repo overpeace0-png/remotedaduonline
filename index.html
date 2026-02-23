@@ -1,81 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BANDAR REMOTE V36</title>
+    <title>BANDAR TOTAL V38</title>
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; padding: 20px; }
-        .st-box { border: 2px solid #333; padding: 15px; margin-bottom: 15px; background: #0a0a0a; border-radius: 10px; }
-        button { width: 100%; padding: 15px; margin: 8px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 5px; text-transform: uppercase; }
+        body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding: 15px; }
+        .st-box { border: 1px solid #0f0; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #050505; }
+        button { width: 100%; padding: 12px; margin: 5px 0; cursor: pointer; background: #111; color: #0f0; border: 1px solid #0f0; font-weight: bold; border-radius: 5px; }
         button:active { background: #0f0; color: #000; }
-        input { width: 85%; padding: 12px; background: #111; color: #f0f; border: 1px solid #f0f; text-align: center; font-size: 18px; letter-spacing: 3px; border-radius: 5px; }
-        .panic { background: #400; border-color: #f00; color: #f00; }
-        
-        /* TOAST STYLE */
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #0f0; color: #000;
-            text-align: center; border-radius: 5px; padding: 16px; position: fixed;
-            z-index: 1; left: 50%; bottom: 30px; transform: translateX(-50%);
-            font-weight: bold; box-shadow: 0 0 20px #0f0;
-        }
-        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        input { width: 85%; padding: 10px; background: #000; color: #f0f; border: 1px solid #f0f; text-align: center; margin-bottom: 5px; font-size: 16px; }
+        #toast { visibility: hidden; min-width: 200px; background: #0f0; color: #000; text-align: center; padding: 10px; position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); font-weight: bold; border-radius: 5px; }
+        #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
-    <h2>COMMANDER V36 - GHOST</h2>
-    <div class="st-box">STATUS: <span id="stTxt" style="color:red">OFFLINE</span></div>
+    <h3>COMMANDER V38 - TOTAL TARGET</h3>
     
     <div class="st-box">
-        <label>URUTAN CUSTOM (B/K):</label><br><br>
-        <input id="strInput" placeholder="CONTOH: BKB" maxlength="20">
+        <label>TARGET TOTAL (9 - 54):</label><br><br>
+        <input type="number" id="totalIn" placeholder="Contoh: 9 atau 45" min="9" max="54">
+        <button onclick="sendTotal()" style="color:#f0f; border-color:#f0f;">SUNTIK TOTAL ANGKA</button>
+    </div>
+
+    <div class="st-box">
+        <label>URUTAN STR (BKB):</label><br><br>
+        <input id="strIn" placeholder="Contoh: BKB">
         <button onclick="sendStr()">SUNTIK URUTAN</button>
     </div>
 
-    <button onclick="sendDirect('big')">MODE: BESAR TERUS</button>
-    <button onclick="sendDirect('sml')">MODE: KECIL TERUS</button>
-    <button onclick="sendDirect('normal')">MODE: NORMAL</button>
-    
-    <button class="panic" onclick="sendDirect('panic')">!!! PANIC BUTTON !!!</button>
+    <button onclick="sendMode('big')">BESAR (32-54)</button>
+    <button onclick="sendMode('sml')">KECIL (9-31)</button>
+    <button onclick="sendMode('normal')" style="color:#fff; border-color:#fff;">NORMAL</button>
+    <button onclick="sendMode('panic')" style="background:#400; color:#f00; border-color:#f00;">PANIC BUTTON</button>
 
-    <div id="toast">INJEKSI BERHASIL!</div>
+    <div id="toast"></div>
 
     <script>
-        const pubnub = new PubNub({
+        const pub = new PubNub({
             publishKey: 'pub-c-1acc1a35-3758-4207-9563-291fa3d70860',
             subscribeKey: 'sub-c-93d8d3c9-db67-4384-ba75-732532bee299',
-            userId: 'REMOTE_BANDAR'
+            userId: 'REMOTE_V38'
         });
 
-        pubnub.addListener({
-            status: (s) => {
-                if (s.category === "PNConnectedCategory") {
-                    document.getElementById('stTxt').innerText = 'ONLINE';
-                    document.getElementById('stTxt').style.color = '#0f0';
-                }
-            }
-        });
-        pubnub.subscribe({ channels: ['Anomaly-Dice'] });
+        function showToast(m) {
+            let t = document.getElementById("toast"); t.innerText = m; t.className = "show";
+            setTimeout(() => { t.className = ""; }, 2500);
+        }
 
-        function showToast(msg) {
-            let t = document.getElementById("toast");
-            t.innerText = msg;
-            t.className = "show";
-            setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+        function sendTotal() {
+            let val = document.getElementById('totalIn').value;
+            if (val >= 9 && val <= 54) {
+                pub.publish({ channel: 'Anomaly-Dice', message: { m: 'unq', t: val } });
+                showToast("TARGET TOTAL [" + val + "] TERINJEKSI!");
+            } else { alert("Input harus 9 sampai 54!"); }
         }
 
         function sendStr() {
-            let val = document.getElementById('strInput').value.trim();
-            if(val !== "") {
-                pubnub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: val } });
-                showToast("URUTAN [" + val.toUpperCase() + "] TERINJEKSI!");
-            }
+            let val = document.getElementById('strIn').value.trim();
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: 'str', s: val } });
+            showToast("SEQUENCE [" + val.toUpperCase() + "] TERINJEKSI!");
         }
 
-        function sendDirect(mode) {
-            pubnub.publish({ channel: 'Anomaly-Dice', message: { m: mode } });
-            showToast("MODE " + mode.toUpperCase() + " AKTIF!");
+        function sendMode(m) {
+            pub.publish({ channel: 'Anomaly-Dice', message: { m: m } });
+            showToast("MODE " + m.toUpperCase() + " AKTIF!");
         }
     </script>
 </body>
